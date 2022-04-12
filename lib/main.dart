@@ -24,8 +24,8 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.indigo,
           textTheme: newTextTheme
       ),
+
       home: Physics(),
     );
   }
 }
-
