@@ -15,12 +15,12 @@ class _PhysicsState extends State<Physics> with SingleTickerProviderStateMixin{
   bool isClickAfter = true;
   double mapY = 600;
   double mapX = 300;
-  double elasticConstant = 0.7;
+  double elasticConstant = 0.8;
   List objList = [];
   List pathList=[];
-  var ball = myBall(100, 200, 200, 0, 20, 1,0);
+  var ball = myBall(100, 200, 200, 0, 30, 1,0);
   var ball3 = myBall(150, 100, 0, 0, 20, 1, 0);
-  var newball = myBall(200, 200, -200, 0, 25, 1.5, 0);
+  var newball = myBall(200, 200, -300, 0, 30, 1, 0);
 
 
   late AnimationController _animationController;
@@ -164,13 +164,13 @@ class _PhysicsState extends State<Physics> with SingleTickerProviderStateMixin{
 
                       if (!objList[i].isClick) {
 
-                        checkCollapse(objList, baseTime);
+
 
                         objList[i].addYvel(baseTime * objList[i].yAcc);
                         objList[i].addXvel(baseTime * objList[i].xAcc);
 
 
-
+                        checkCollapse(objList, baseTime);
 
                         objList[i].addAngle(baseTime*objList[i].angularVel);
 
@@ -184,6 +184,21 @@ class _PhysicsState extends State<Physics> with SingleTickerProviderStateMixin{
 
                         }
                         else if(wallInt==2){
+
+
+                          objList[i].mulYvel(-elasticConstant);
+                          objList[i].mulXvel(elasticConstant);
+
+                        }
+                        else if(wallInt==3){
+                          double wallCorrection = objList[i].xVel* baseTime +objList[i].xPos + objList[i].ballRad - mapX -1;
+                          objList[i].xPos -= wallCorrection;
+                          objList[i].mulXvel(-elasticConstant);
+                          objList[i].mulYvel(elasticConstant);
+                        }
+                        else if(wallInt==4){
+                          double wallCorrection = objList[i].xVel* baseTime +objList[i].xPos - objList[i].ballRad + 1;
+                          objList[i].xPos += wallCorrection;
                           objList[i].mulXvel(-elasticConstant);
                           objList[i].mulYvel(elasticConstant);
                         }
@@ -252,34 +267,45 @@ class _PhysicsState extends State<Physics> with SingleTickerProviderStateMixin{
 
 
 
-  bool checkCollapse(List<dynamic> objList, double baseTime) {
+  void checkCollapse(List<dynamic> objList, double baseTime) {
 
     for(int i=0; i<objList.length; i++) {
       for (int j = i + 1; j < objList.length; j++) {
-        if (objList[i].objType == 'ball' && objList[j].objType == 'ball') {
+
           if (getDistance(objList[i], objList[j]) < (objList[i].ballRad + objList[j].ballRad)) {
 
-            double correctDistance = (objList[i].ballRad + objList[j].ballRad) - getDistance(objList[i], objList[j]) +2;
-            double eConstant = 0.8;
+            double correctDistance =0.5*( (objList[i].ballRad + objList[j].ballRad) - getDistance(objList[i], objList[j]) +2);
+
+            double eConstant = 0.7;
+
+
+            double vxi = objList[i].xVel;
+            double vyi = objList[i].yVel;
+            double vxj = objList[j].xVel;
+            double vyj = objList[j].yVel;
 
             double xi = objList[i].xPos;
             double yi = objList[i].yPos;
-            List<double> iPos = [objList[i].xPos, objList[i].yPos];
+            double xj = objList[j].xPos;
+            double yj = objList[j].yPos;
 
-            List<double> jPos = [objList[j].xPos, objList[j].yPos];
+            List<double> iPos = [xi, yi];
+
+            List<double> jPos = [xj, yj];
 
             List<double> rVec = [jPos[0]-iPos[0], jPos[1]-iPos[1]];
             List<double> rnorVec = [rVec[0]/sqrt(getL2norm(rVec)), rVec[1]/sqrt(getL2norm(rVec))];
             List<double> norVec = [rVec[1]/sqrt(rVec[0]*rVec[0] + rVec[1]*rVec[1]), -rVec[0]/sqrt(rVec[0]*rVec[0] + rVec[1]*rVec[1])];
 
 
-            List<double> ipVVec = [objList[i].xVel, objList[i].yVel];
-            List<double> jpVVec = [objList[j].xVel, objList[j].yVel];
+            List<double> ipVVec = [vxi, vyi];
+            List<double> jpVVec = [vxj, vyj];
             List<double> ijVVec = [ipVVec[0]-jpVVec[0], ipVVec[1]-jpVVec[1]];
 
             double viVal = getL2norm(ipVVec);
             double vjVal = getL2norm(jpVVec);
 
+              //
 
               objList[i].xPos -= (objList[j].mass/(objList[i].mass + objList[j].mass))* correctDistance *rnorVec[0];
               objList[i].yPos -=(objList[j].mass/(objList[i].mass + objList[j].mass))* correctDistance * rnorVec[1];
@@ -295,34 +321,61 @@ class _PhysicsState extends State<Physics> with SingleTickerProviderStateMixin{
 
             double wi = objList[i].angularVel;
             double wj = objList[j].angularVel;
-
-            objList[i].xVel = ipVVec[0] + pulse*objList[i].rMass*norVec[0];
-            objList[i].yVel = ipVVec[1] + pulse*objList[i].rMass*norVec[1];
-            objList[j].xVel = jpVVec[0] - pulse*objList[j].rMass*norVec[0];
-            objList[j].yVel = jpVVec[1] - pulse*objList[j].rMass*norVec[1];
+            //
+            // objList[i].xVel = ipVVec[0] + pulse*objList[i].rMass*norVec[0];
+            // objList[i].yVel = ipVVec[1] + pulse*objList[i].rMass*norVec[1];
+            // objList[j].xVel = jpVVec[0] - pulse*objList[j].rMass*norVec[0];
+            // objList[j].yVel = jpVVec[1] - pulse*objList[j].rMass*norVec[1];
 
             objList[i].angularVel = wi + pulse * (objList[i].ballRad) / (objList[i].momentI);
             objList[j].angularVel = wj - pulse * (objList[j].ballRad) / (objList[j].momentI);
 
-            return true;
+
+            objList[i].xVel = (
+                (eConstant + 1) * objList[j].mass * vxj +
+                    vxi * (objList[i].mass - eConstant * objList[j].mass)
+            ) /
+                (objList[i].mass + objList[j].mass);
+
+            objList[j].xVel = (
+                (eConstant + 1) * objList[i].mass * vxi +
+                    vxj * (objList[j].mass - eConstant * objList[i].mass)
+            ) /
+                (objList[i].mass + objList[j].mass);
+
+            objList[i].yVel = (
+                (eConstant + 1) * objList[j].mass * vyj +
+                    vyi * (objList[i].mass - eConstant * objList[j].mass)
+            ) /
+                (objList[i].mass + objList[j].mass);
+
+            objList[j].yVel = (
+                (eConstant + 1) * objList[i].mass * vyi +
+                    vyj * (objList[j].mass - eConstant * objList[i].mass)
+            ) /
+                (objList[i].mass + objList[j].mass);
+
 
           }
-        }
+
       }
     }
-    return false;
 
   }
 
 
   int checkIsWall( var obj){
-    if ((obj.yVel* baseTime +obj.yPos + obj.ballRad >= mapY) ||
-        (obj.yVel* baseTime + obj.yPos - obj.ballRad <=0)) {
-          return 1;
+    if (obj.yVel* baseTime +obj.yPos + obj.ballRad >= mapY){
+      return 1;
     }
-    else if ((obj.xVel*baseTime +obj.xPos + obj.ballRad >= mapX) ||
-        (obj.xVel* baseTime + obj.xPos - obj.ballRad <=0)) {
-      return 2;
+    else if(obj.yVel* baseTime + obj.yPos - obj.ballRad <=0) {
+          return 2;
+    }
+    else if (obj.xVel*baseTime +obj.xPos + obj.ballRad >= mapX){
+      return 3;
+    }
+    else if(obj.xVel* baseTime + obj.xPos - obj.ballRad <=0) {
+      return 4;
     }
 
     return 0;
