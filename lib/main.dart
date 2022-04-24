@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:flutterphysics/colors.dart';
+import 'package:flutterphysics/home_page.dart';
 import 'package:flutterphysics/physics.dart';
+import 'package:get/get_navigation/get_navigation.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,16 +21,19 @@ class MyApp extends StatelessWidget {
       displayColor: Colors.white70,
     );
 
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Flutter Physics World',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-          scaffoldBackgroundColor: Colors.black87,
-          primarySwatch: Colors.indigo,
+          scaffoldBackgroundColor: colorLibrary.mainColor,
+          //primarySwatch: Colors.indigo,
           textTheme: newTextTheme
       ),
 
-      home: Physics(),
+      home: ScreenTypeLayout(
+          desktop: HomePage(),
+        mobile: HomePage(),
+      )
     );
   }
 }
